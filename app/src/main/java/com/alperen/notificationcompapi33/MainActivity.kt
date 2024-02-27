@@ -38,60 +38,47 @@ class MainActivity : ComponentActivity() {
         setContent {
             NotificationCompApi33Theme {
                 val context = LocalContext.current
-                var hasNotificationPermission by remember {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        mutableStateOf(
-                            ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.POST_NOTIFICATIONS
-                            ) == PackageManager.PERMISSION_GRANTED
-                        )
-                    } else {
-                        mutableStateOf(true)
-                    }
-                }
+                var hasNotificationPermission by remember { mutableStateOf(false) }
+
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
-                    onResult = {isGranted ->
+                    onResult = { isGranted ->
                         hasNotificationPermission = isGranted
-                    if (isGranted){
-                        //shouldShowRequestPermissionRationale()
-                    }
+                        if (isGranted) {
+                            showNotification(context)
+                        }
                     }
                 )
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
-                    verticalArrangement =Arrangement.Center,
+                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Button(onClick =  {
-                       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                           permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                       }   }) {
-                        Text(text = "Request Permission")
-                    }
                     Button(onClick = {
-                        if (hasNotificationPermission){
-                        showNotification()}
+                        if (!hasNotificationPermission) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            showNotification(context)
+                        }
                     }) {
-                        Text(text = "Show Notification")
-                        
+                        Text(text = "Request Permission / Show Notification")
                     }
                 }
-
-
             }
         }
     }
-    private fun showNotification(){
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = NotificationCompat.Builder(applicationContext,"channel_id")
+
+    private fun showNotification(context: Context) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notification = NotificationCompat.Builder(context, "channel_id")
             .setContentText("This is some content")
             .setContentTitle("hello world")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .build()
-        notificationManager.notify(1,notification)
+        notificationManager.notify(1, notification)
     }
 }
